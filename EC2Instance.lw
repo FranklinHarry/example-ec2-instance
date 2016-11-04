@@ -4,7 +4,7 @@
 composition
 
 import Fugue.AWS.EC2 as EC2
-import Fugue.Core.AWS.Common as AWS
+import Fugue.AWS as AWS
 
 # Insert the AWS ID of an existing subnet below, or replace this value
 # with a new Fugue.AWS.EC2.Subnet value.
