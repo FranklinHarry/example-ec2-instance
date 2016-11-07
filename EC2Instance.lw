@@ -8,7 +8,7 @@ import Fugue.AWS as AWS
 
 # Insert the AWS ID of an existing subnet below, or replace this value
 # with a new Fugue.AWS.EC2.Subnet value.
-existingSubnet: EC2.Subnet.external("subnet-1234abcd", AWS.Us-east-1)
+existingSubnet: EC2.Subnet.external("subnet-1234abcd", AWS.Us-west-2)
 
 # If using an existing subnet, specify the AZ of that subnet below
 # (used for the EBS volume).
