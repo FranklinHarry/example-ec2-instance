@@ -1,133 +1,33 @@
+# This example composition will launch an Ubuntu 16.04 free-tier
+# eligible EC2 instance into a VPC subnet.
+
 composition
 
 import Fugue.AWS.EC2 as EC2
-import Fugue.AWS.IAM as IAM
-import Fugue.Core.AWS.Common as AWS
+import Fugue.AWS as AWS
 
-#########################
-# MISC
-#########################
+# Insert the AWS ID of an existing subnet below, or replace this value
+# with a new Fugue.AWS.EC2.Subnet value.
+existingSubnet: EC2.Subnet.external("subnet-1234abcd", AWS.Us-west-2)
 
-example-instance-tag: AWS.Tag({
-  key: 'Application',
-  value: 'MVC EC2 Instance'
-})
-
-example-instance-port: 22
-
-#########################
-# NETWORKS
-#########################
-example-instance-vpc: EC2.Vpc({
-  cidrBlock: "10.0.0.0/16",
-  tags: [example-instance-tag],
-  instanceTenancy: EC2.DefaultTenancy,
-  region: AWS.Us-west-2,
-  dhcpOptions: None
-})
-
-public-10-0-1-0: EC2.Subnet({
-  cidrBlock: '10.0.1.0/24',
-  vpc: example-instance-vpc,
-  availabilityZone: AWS.A,
-  mapPublicIpOnLaunch: True,
-  defaultForAz: False,
-  tags: [example-instance-tag]
-})
-
-example-instance-igw: EC2.InternetGateway({
-  region: AWS.Us-west-2,
-  vpc: example-instance-vpc,
-  tags: [example-instance-tag]
-})
-
-public-route: EC2.Route({
-  destinationCidrBlock: "0.0.0.0/0",
-  target: EC2.GatewayTarget(example-instance-igw)
-})
-
-public-route-table: EC2.RouteTable({
-  vpc: example-instance-vpc,
-  routes: [public-route],
-  associations: [
-    public-10-0-1-0
-  ],
-  tags: [example-instance-tag]
-})
-
-#########################
-# SSH SG
-#########################
-
-example-instance-sg: EC2.SecurityGroup({
-  description: "Allow SSH traffic from the Internet",
-  ipPermissions: [
-    sshPermission
-  ],
-  ipPermissionsEgress: None,
-  tags: [example-instance-tag],
-  vpc: example-instance-vpc
-})
-
-sshPermission: EC2.IpPermission({
-  ipProtocol: "tcp",
-  fromPort: example-instance-port,
-  toPort: example-instance-port,
-  prefixLists: None,
-  target: EC2.IpRanges([
-    EC2.IpRange(cidrIp: "0.0.0.0/0")
-  ])
-})
-
-#########################
-# IAM
-#########################
-
-iam-admin: IAM.Policy{
-  policyName: 'admin',
-  policyDocument: String.readFileUtf8('ec2instance/policy.json')
-}
-
-iam-role: IAM.Role{
-  roleName: 'test-role',
-  assumeRolePolicyDocument: IAM.Policy.AssumeRole.ec2,
-  rolePolicies: [iam-admin]
-}
-
-iam-profile: IAM.InstanceProfile{
-  instanceProfileName: 'test-profile',
-  roles: [iam-role]
-}
+# If using an existing subnet, specify the AZ of that subnet below
+# (used for the EBS volume).
+existingSubnetAZ: AWS.A
 
 #########################
 # EC2 Instance
 #########################
-instance: EC2.Instance.new {
-  keyName: "test-key",
-  instanceType: EC2.T2_micro,
-  monitoring: False,
-  subnet: public-10-0-1-0,
+instance: EC2.Instance {
+  subnet: existingSubnet,
   blockDeviceMappings: [
     EC2.InstanceBlockDeviceMapping.new {
       deviceName: "/dev/sdz",
       ebs: EC2.EbsInstanceBlockDevice.new {
         volume: EC2.Volume.new {
-          size: 1,
-          availabilityZone: AWS.A,
-          tags: [example-instance-tag],
-          volumeType: EC2.Standard,
-          encrypted: False,
+          availabilityZone: existingSubnetAZ
         },
-        deleteOnTermination: True,
-      }
+      },
     }
   ],
-  tags: [example-instance-tag],
-  securityGroups: [example-instance-sg],
-  iamInstanceProfile: iam-profile,
-  ebsOptimized: False,
-  image: "ami-d0f506b0",
-  disableApiTermination: False,
-  instanceInitiatedShutdownBehavior: EC2.Stop,
-  userData: "Some really great user data"
+  image: "ami-a9d276c9"
 }
