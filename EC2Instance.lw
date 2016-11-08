@@ -14,10 +14,14 @@ existingSubnet: EC2.Subnet.external("subnet-1234abcd", AWS.Us-west-2)
 # (used for the EBS volume).
 existingSubnetAZ: AWS.A
 
+# Insert the AWS ID of an existing Security Group below, or replace
+# this value with a new Fugue.AWS.EC2.SecurityGroup value.
+existingSG: EC2.SecurityGroup.external("sg-1234", AWS.Us-west-2)
+
 #########################
 # EC2 Instance
 #########################
-instance: EC2.Instance {
+instance: EC2.Instance.new {
   subnet: existingSubnet,
   blockDeviceMappings: [
     EC2.InstanceBlockDeviceMapping.new {
@@ -29,5 +33,6 @@ instance: EC2.Instance {
       },
     }
   ],
-  image: "ami-a9d276c9"
+  image: "ami-a9d276c9",
+  securityGroups: [existingSG]
 }
