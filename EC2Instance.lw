@@ -34,5 +34,6 @@ instance: EC2.Instance.new {
     }
   ],
   image: "ami-a9d276c9",
-  securityGroups: [existingSG]
+  securityGroups: [existingSG],
+  instanceType: EC2.T2_micro
 }
