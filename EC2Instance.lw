@@ -28,6 +28,7 @@ instance: EC2.Instance.new {
       deviceName: "/dev/sdz",
       ebs: EC2.EbsInstanceBlockDevice.new {
         volume: EC2.Volume.new {
+          size: 1,
           availabilityZone: existingSubnetAZ
         },
       },
