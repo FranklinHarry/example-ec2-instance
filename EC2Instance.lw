@@ -6,35 +6,74 @@ composition
 import Fugue.AWS.EC2 as EC2
 import Fugue.AWS as AWS
 
-# Insert the AWS ID of an existing subnet below, or replace this value
-# with a new Fugue.AWS.EC2.Subnet value.
-existingSubnet: EC2.Subnet.external("subnet-1234abcd", AWS.Us-west-2)
+# To use an existing subnet, uncomment the line below and insert the
+# AWS ID of an existing subnet below.
+# exampleSubnet: EC2.Subnet.external("subnet-1234abcd", AWS.Us-west-2)
 
-# If using an existing subnet, specify the AZ of that subnet below
-# (used for the EBS volume).
-existingSubnetAZ: AWS.A
+# If using an existing subnet, uncomment the line below and specify
+# the AZ of that subnet (used for the EBS volume).
+# exampleSubnetAZ: AWS.A
 
-# Insert the AWS ID of an existing Security Group below, or replace
-# this value with a new Fugue.AWS.EC2.SecurityGroup value.
-existingSG: EC2.SecurityGroup.external("sg-1234", AWS.Us-west-2)
+# To use an existing security group, uncomment the line below and
+# insert the AWS ID of an existing security group.
+# exampleSecurityGroup: EC2.SecurityGroup.external("sg-1234", AWS.Us-west-2)
 
 #########################
 # EC2 Instance
 #########################
 instance: EC2.Instance.new {
-  subnet: existingSubnet,
+  subnet: exampleSubnet,
   blockDeviceMappings: [
     EC2.InstanceBlockDeviceMapping.new {
       deviceName: "/dev/sdz",
       ebs: EC2.EbsInstanceBlockDevice.new {
         volume: EC2.Volume.new {
           size: 1,
-          availabilityZone: existingSubnetAZ
+          availabilityZone: exampleSubnetAZ
         },
       },
     }
   ],
   image: "ami-a9d276c9",
-  securityGroups: [existingSG],
+  securityGroups: [exampleSecurityGroup],
   instanceType: EC2.T2_micro
+}
+
+#########################
+### PREREQUISITES
+#########################
+
+# If you are using an existing subnet and security group above,
+# comment out this entire section.
+
+exampleVpc: EC2.Vpc.new {
+  cidrBlock: "10.0.0.0/16",
+  region: AWS.Us-west-2,
+}
+
+exampleSubnet: EC2.Subnet.new {
+  cidrBlock: '10.0.1.0/24',
+  vpc: exampleVpc,
+  availabilityZone: exampleSubnetAZ
+}
+
+exampleSubnetAZ: AWS.A
+
+exampleSecurityGroup: EC2.SecurityGroup.new {
+  description: "Allow http/s traffic from the Internet",
+  vpc: exampleVpc,
+# For more common protocols, we provide IP permission abstractions
+# like the HTTPS example in the list below:
+  ipPermissions: [sgHTTP, EC2.IpPermission.https(EC2.IpPermission.Target.all)]
+}
+
+# This is an alternative method of creating an IP permission, listed
+# in the ipPermissions list above as sgHTTP.
+sgHTTP: EC2.IpPermission.new {
+  ipProtocol: "tcp",
+  fromPort: 80,
+  toPort: 80,
+  target: EC2.IpRanges([
+    EC2.IpRange(cidrIp: "0.0.0.0/0")
+  ])
 }
