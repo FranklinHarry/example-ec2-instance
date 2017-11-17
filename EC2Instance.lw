@@ -46,7 +46,9 @@ instanceRootVolume: EC2.RootBlockDevice.new {
 }
 
 instanceVolume: EC2.Volume.new {
-  availabilityZone: exampleSubnetAZ,
+# The volume region and availability zone must match that of the subnet the
+# instance is launched in
+  availabilityZone: AWS.A,
   region: AWS.Us-west-2,
   size: 1
 }
