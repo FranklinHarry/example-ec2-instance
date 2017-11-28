@@ -23,20 +23,34 @@ import Fugue.AWS as AWS
 #########################
 instance: EC2.Instance.new {
   subnet: exampleSubnet,
-  blockDeviceMappings: [
-    EC2.InstanceBlockDeviceMapping.new {
-      deviceName: "/dev/sdz",
-      ebs: EC2.EbsInstanceBlockDevice.new {
-        volume: EC2.Volume.new {
-          size: 1,
-          availabilityZone: exampleSubnetAZ
-        },
-      },
+  rootBlockDevice: instanceRootVolume,
+  volumes: [
+    EC2.VolumeAttachment.new {
+      volume: instanceVolume,
+      deviceName: "/dev/xvdb"
+    }
+  ],
+  instanceStores: [
+    EC2.InstanceStore.new {
+      deviceName: "/dev/xvdc",
+      virtualName: "ephemeral0"
     }
   ],
   image: "ami-a9d276c9",
   securityGroups: [exampleSecurityGroup],
   instanceType: EC2.T2_micro
+}
+
+instanceRootVolume: EC2.RootBlockDevice.new {
+  volumeSize: 8
+}
+
+instanceVolume: EC2.Volume.new {
+# The volume region and availability zone must match that of the subnet the
+# instance is launched in
+  availabilityZone: AWS.A,
+  region: AWS.Us-west-2,
+  size: 1
 }
 
 #########################
